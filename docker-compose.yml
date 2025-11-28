@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # MongoDB for content storage
+  mongodb:
+    image: mongo:7.0
+    container_name: knowinfo-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: knowinfo
+
+  # Neo4j for graph analysis
+  neo4j:
+    image: neo4j:5.14
+    container_name: knowinfo-neo4j
+    restart: always
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    environment:
+      NEO4J_AUTH: neo4j/knowinfo_password
+      NEO4J_dbms_memory_pagecache_size: 1G
+      NEO4J_dbms_memory_heap_max__size: 2G
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: knowinfo-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # Ollama for local LLMs
+  ollama:
+    image: ollama/ollama:latest
+    container_name: knowinfo-ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # KnowInfo API
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: knowinfo-api
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env
+    depends_on:
+      - mongodb
+      - neo4j
+      - redis
+      - ollama
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - NEO4J_URI=bolt://neo4j:7687
+      - REDIS_URL=redis://redis:6379/0
+      - OLLAMA_BASE_URL=http://ollama:11434
+
+volumes:
+  mongodb_data:
+  neo4j_data:
+  neo4j_logs:
+  redis_data:
+  ollama_data:
