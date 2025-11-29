@@ -35,6 +35,9 @@ class Settings(BaseSettings):
 
     # Messaging Bots (ALL FREE!)
     telegram_bot_token: str  # Get from @BotFather on Telegram (FREE!)
+    telegram_api_id: Optional[str] = None  # For monitoring public channels (get from my.telegram.org)
+    telegram_api_hash: Optional[str] = None
+    telegram_monitor_channels: list[str] = ["telegram", "durov", "cnn", "bbcnews"]
 
     # WhatsApp via PyWhatKit (FREE - no Twilio!)
     # No configuration needed - uses WhatsApp Web automation

@@ -4,6 +4,7 @@ Test script for monitors - verify Twitter, Reddit, RSS scraping works
 """
 import asyncio
 import sys
+import argparse
 from pathlib import Path
 
 # Add project to path
@@ -12,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from src.stage1_ingestion.twitter_monitor import TwitterMonitor, TwitterSingleTweetScraper
 from src.stage1_ingestion.reddit_monitor import RedditMonitor
 from src.stage1_ingestion.rss_monitor import RSSMonitor
+from src.stage1_ingestion.telegram_monitor import TelegramMonitor
 from src.utils.logger import setup_logging
 from config import settings
 
@@ -141,8 +143,74 @@ async def test_rss():
     print("\n✅ RSS monitor test complete!\n")
 
 
+async def test_telegram():
+    """Test Telegram monitor"""
+    print("\n" + "="*80)
+    print("Testing Telegram Monitor")
+    print("="*80 + "\n")
+
+    if not settings.telegram_api_id or not settings.telegram_api_hash:
+        print("❌ Telegram API credentials not set in .env")
+        print("Please set TELEGRAM_API_ID and TELEGRAM_API_HASH")
+        return
+
+    monitor = TelegramMonitor(
+        api_id=settings.telegram_api_id,
+        api_hash=settings.telegram_api_hash,
+        channels=settings.telegram_monitor_channels,
+        keywords=["breaking", "news", "emergency", "update"]
+    )
+
+    print(f"Monitoring channels: {settings.telegram_monitor_channels}")
+    await monitor.start()
+
+    # Get first 3 messages
+    count = 0
+    print("\nWaiting for messages (this might take a while depending on channel activity)...")
+    
+    try:
+        async for content in monitor.stream_content():
+            print(f"\n--- Telegram Message {count + 1} ---")
+            print(f"Channel: {content.metadata.get('channel')}")
+            print(f"Author: {content.author_username}")
+            print(f"Text: {content.text[:200]}...")
+            print(f"URL: {content.url}")
+
+            count += 1
+            if count >= 3:
+                break
+    except KeyboardInterrupt:
+        print("\nStopping...")
+    finally:
+        await monitor.stop()
+        print("\n✅ Telegram monitor test complete!\n")
+
+
 async def main():
     """Run all tests"""
+    parser = argparse.ArgumentParser(description="Test monitors")
+    parser.add_argument("--test", choices=["twitter", "tweet", "reddit", "rss", "telegram", "all"], help="Test to run")
+    args = parser.parse_args()
+
+    if args.test:
+        choice = args.test
+        # Map choice to number for compatibility with existing logic or just run directly
+        if choice == "twitter":
+            await test_twitter_search()
+        elif choice == "tweet":
+            await test_twitter_single_tweet()
+        elif choice == "reddit":
+            await test_reddit()
+        elif choice == "rss":
+            await test_rss()
+        elif choice == "telegram":
+            await test_telegram()
+        elif choice == "all":
+            await test_twitter_search()
+            await test_reddit()
+            await test_rss()
+        return
+
     print("\n" + "="*80)
     print("KnowInfo Monitor Testing")
     print("="*80)
@@ -152,7 +220,8 @@ async def main():
     print("2. Single tweet scraper")
     print("3. Reddit monitor")
     print("4. RSS monitor")
-    print("5. All monitors")
+    print("5. Telegram monitor")
+    print("6. All monitors")
 
     choice = input("\nEnter choice (1-5): ").strip()
 
@@ -165,9 +234,12 @@ async def main():
     elif choice == "4":
         await test_rss()
     elif choice == "5":
+        await test_telegram()
+    elif choice == "6":
         await test_twitter_search()
         await test_reddit()
         await test_rss()
+        # Telegram skipped in 'all' to avoid interactive login prompts during automated runs
     else:
         print("Invalid choice")
 
