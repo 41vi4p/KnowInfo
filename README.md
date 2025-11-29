@@ -1,5 +1,7 @@
 # KnowInfo - Crisis Misinformation Detection System
 
+### Made In Mumbai Hacks 2025 by Codebreakers
+
 A real-time AI-powered system for detecting, verifying, and correcting misinformation during global crises.
 
 ## 🎯 Features
@@ -8,6 +10,9 @@ A real-time AI-powered system for detecting, verifying, and correcting misinform
 - **AI-Powered Claim Extraction**: Uses LLMs (Ollama, Gemini, OpenAI) to extract verifiable claims
 - **RAG-Based Verification**: Cross-references claims against authoritative sources (WHO, CDC, Reuters, etc.)
 - **Patient Zero Tracking**: Graph-based analysis to trace misinformation origins and spread
+- **Dual-Mode Telegram Integration**: 
+  - **Ingestion**: Monitors public channels for crisis intel
+  - **Response**: Interactive bot for user verification
 - **WhatsApp Bot**: Instant fact-checking via WhatsApp
 - **Real-Time Dashboard**: Live monitoring of trending false claims
 - **Continuous Learning**: A/B testing and feedback integration
@@ -323,7 +328,8 @@ KnowInfo/
 - [x] RAG verification engine
 
 ### Phase 2: Full Pipeline (In Progress)
-- [ ] Twitter/Reddit/Telegram monitors
+- [x] Telegram Monitor & Bot Integration
+- [ ] Twitter/Reddit monitors
 - [ ] Complete WhatsApp bot
 - [ ] Dashboard API
 - [ ] Patient zero tracking

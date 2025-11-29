@@ -154,7 +154,7 @@ class ModelManager:
         max_tokens: int
     ) -> str:
         """Generate text using Gemini"""
-        model = self.gemini_client.GenerativeModel('gemini-1.5-flash')
+        model = self.gemini_client.GenerativeModel('gemini-2.5-pro')
         response = await model.generate_content_async(
             prompt,
             generation_config={

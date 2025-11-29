@@ -18,7 +18,8 @@ from src.utils.metrics import get_metrics
 
 # Import API routers
 from src.api.whatsapp import router as whatsapp_router
-# from src.api.dashboard import router as dashboard_router
+from src.api.dashboard import router as dashboard_router
+from src.api.telegram import router as telegram_router
 # from src.api.public import router as public_router
 
 # Import Telegram bot
@@ -204,10 +205,8 @@ async def metrics():
 
 # Include API routers
 app.include_router(whatsapp_router, prefix="/api/whatsapp", tags=["WhatsApp"])
-# Import Telegram router
-from src.api.telegram import router as telegram_router
 app.include_router(telegram_router, prefix="/api/telegram", tags=["Telegram"])
-# app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(dashboard_router, tags=["Dashboard"])
 # app.include_router(public_router, prefix="/api/v1", tags=["Public API"])
 
 
