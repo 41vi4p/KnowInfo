@@ -5,8 +5,23 @@ import structlog
 from typing import Optional, List, Dict, Any
 import asyncio
 from enum import Enum
+import re
 
 logger = structlog.get_logger(__name__)
+
+
+def clean_llm_response(text: str) -> str:
+    """
+    Clean LLM response by removing thinking blocks and extra whitespace.
+    Removes content between <think> and </think> tags.
+    """
+    # Remove <think>...</think> blocks (case insensitive, handles multiline)
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    # Remove any remaining think tags
+    text = re.sub(r'</?think>', '', text, flags=re.IGNORECASE)
+    # Clean up extra whitespace
+    text = text.strip()
+    return text
 
 
 class ModelProvider(str, Enum):
@@ -83,7 +98,7 @@ class ModelManager:
     async def generate_text(
         self,
         prompt: str,
-        model: str = "llama3.2",
+        model: str = "qwen3",
         temperature: float = 0.7,
         max_tokens: int = 1000,
         preferred_provider: Optional[ModelProvider] = None
@@ -130,7 +145,7 @@ class ModelManager:
             }
         )
         logger.info("Generated with Ollama", model=model)
-        return response['response']
+        return clean_llm_response(response['response'])
 
     async def _generate_gemini(
         self,
@@ -148,7 +163,7 @@ class ModelManager:
             }
         )
         logger.info("Generated with Gemini")
-        return response.text
+        return clean_llm_response(response.text)
 
     async def _generate_openai(
         self,
@@ -165,7 +180,7 @@ class ModelManager:
             max_tokens=max_tokens
         )
         logger.info("Generated with OpenAI", model=model)
-        return response.choices[0].message.content
+        return clean_llm_response(response.choices[0].message.content)
 
     async def _generate_anthropic(
         self,
@@ -181,7 +196,7 @@ class ModelManager:
             messages=[{"role": "user", "content": prompt}]
         )
         logger.info("Generated with Anthropic")
-        return response.content[0].text
+        return clean_llm_response(response.content[0].text)
 
     async def generate_embeddings(
         self,
@@ -225,7 +240,7 @@ class ModelManager:
         self,
         text: str,
         categories: List[str],
-        model: str = "llama3.2"
+        model: str = "qwen3"
     ) -> Dict[str, float]:
         """
         Classify text into categories
@@ -262,7 +277,7 @@ Respond in JSON format: {{"category_name": confidence_score}}"""
     async def extract_entities(
         self,
         text: str,
-        model: str = "llama3.2"
+        model: str = "qwen3"
     ) -> List[Dict[str, str]]:
         """
         Extract named entities from text

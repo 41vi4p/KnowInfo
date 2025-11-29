@@ -11,11 +11,11 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Upgrade pip first
+RUN pip install --no-cache-dir --upgrade pip
 
-# Download spaCy model
-RUN python -m spacy download en_core_web_sm
+# Install Python dependencies with retry logic and increased timeout
+RUN pip install  --timeout 1000 --retries 5 -r requirements.txt
 
 # Copy application code
 COPY . .

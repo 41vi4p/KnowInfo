@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     # Local Models (Ollama)
     ollama_base_url: str = "http://localhost:11434"
     ollama_model_embedding: str = "nomic-embed-text"
-    ollama_model_classification: str = "llama3.2"
-    ollama_model_extraction: str = "llama3.2"
+    ollama_model_classification: str = "qwen3"
+    ollama_model_extraction: str = "qwen3"
 
     # Model Selection Strategy
     use_local_models_first: bool = True  # Try Ollama first, fallback to API
@@ -33,12 +33,11 @@ class Settings(BaseSettings):
     reddit_client_secret: str
     reddit_user_agent: str = "KnowInfo/1.0"
 
-    telegram_bot_token: str
+    # Messaging Bots (ALL FREE!)
+    telegram_bot_token: str  # Get from @BotFather on Telegram (FREE!)
 
-    # WhatsApp
-    twilio_account_sid: str
-    twilio_auth_token: str
-    twilio_whatsapp_number: str
+    # WhatsApp via PyWhatKit (FREE - no Twilio!)
+    # No configuration needed - uses WhatsApp Web automation
 
     # Database
     mongodb_uri: str = "mongodb://localhost:27017"

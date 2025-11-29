@@ -53,10 +53,12 @@ Respond in JSON format:
 }}]"""
 
         try:
+            from ..utils.model_manager import ModelProvider
             response = await self.model_manager.generate_text(
                 prompt=prompt,
                 temperature=0.2,
-                max_tokens=1000
+                max_tokens=1000,
+                preferred_provider=ModelProvider.GEMINI  # Force Gemini for reliable JSON
             )
 
             import json
@@ -66,8 +68,9 @@ Respond in JSON format:
 
             claims = []
             for claim_data in claims_data:
+                from datetime import datetime
                 claim = Claim(
-                    content_id=content.content_id,
+                    content_id=content.content_id or f"content_{int(datetime.utcnow().timestamp())}",
                     claim_text=claim_data["claim_text"],
                     category=await self._categorize_claim(claim_data["claim_text"]),
                     priority=self._determine_priority(claim_data["claim_text"]),

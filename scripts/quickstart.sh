@@ -62,11 +62,19 @@ echo "✅ Data directories created"
 
 echo ""
 echo "========================================="
-echo "Step 3: Starting infrastructure services"
+echo "Step 3: Installing Ollama on Host"
 echo "========================================="
 
-echo "Starting MongoDB, Neo4j, Redis, and Ollama..."
-docker-compose up -d mongodb neo4j redis ollama
+echo "Installing Ollama on your system (not Docker)..."
+./scripts/install_ollama_host.sh
+
+echo ""
+echo "========================================="
+echo "Step 4: Starting infrastructure services"
+echo "========================================="
+
+echo "Starting MongoDB, Neo4j, and Redis..."
+docker-compose up -d mongodb neo4j redis
 
 echo "Waiting for services to be ready..."
 sleep 10
@@ -96,32 +104,12 @@ else
     echo "❌ Redis not ready"
 fi
 
-# Check Ollama
-echo -n "Checking Ollama... "
+# Check Ollama (on host)
+echo -n "Checking Ollama (host system)... "
 if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
     echo "✅"
 else
-    echo "⚠️  Ollama may still be starting"
-fi
-
-echo ""
-echo "========================================="
-echo "Step 4: Setting up Ollama models"
-echo "========================================="
-
-echo "This will download ~4GB of models. Continue? (y/n)"
-read -r response
-
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-    echo "Pulling nomic-embed-text (embeddings)..."
-    docker-compose exec ollama ollama pull nomic-embed-text
-
-    echo "Pulling llama3.2 (text generation)..."
-    docker-compose exec ollama ollama pull llama3.2
-
-    echo "✅ Models installed"
-else
-    echo "⚠️  Skipping model download. You'll need API keys (Gemini/OpenAI) instead."
+    echo "⚠️  Ollama may not be started. Run: sudo systemctl start ollama"
 fi
 
 echo ""

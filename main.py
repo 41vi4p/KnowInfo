@@ -16,17 +16,27 @@ from src.utils.logger import setup_logging
 from src.utils.model_manager import init_model_manager
 from src.utils.metrics import get_metrics
 
-# Import API routers (to be created)
-# from src.api.whatsapp import router as whatsapp_router
+# Import API routers
+from src.api.whatsapp import router as whatsapp_router
 # from src.api.dashboard import router as dashboard_router
 # from src.api.public import router as public_router
 
+# Import Telegram bot
+from src.stage5_response.telegram_bot import TelegramFactCheckBot
+import asyncio
+
 logger = setup_logging(settings.log_level)
+
+# Global bot instance and task
+bot_instance = None
+bot_task = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
+    global bot_instance, bot_task
+    
     # Startup
     logger.info("Starting KnowInfo system", environment=settings.environment)
 
@@ -59,10 +69,39 @@ async def lifespan(app: FastAPI):
     )
     logger.info("Model manager initialized")
 
+    # Start Telegram bot
+    if settings.telegram_bot_token:
+        try:
+            logger.info("Starting Telegram bot")
+            bot_instance = TelegramFactCheckBot(
+                token=settings.telegram_bot_token,
+                knowledge_base_path=settings.knowledge_base_path,
+                vector_db_path=settings.vector_db_path
+            )
+            bot_task = asyncio.create_task(bot_instance.start())
+            logger.info("Telegram bot started as background task")
+        except Exception as e:
+            logger.error("Failed to start Telegram bot", error=str(e))
+    else:
+        logger.warning("Telegram bot token not configured, skipping bot startup")
+
     yield
 
     # Shutdown
     logger.info("Shutting down KnowInfo system")
+    
+    # Stop Telegram bot
+    if bot_instance:
+        try:
+            logger.info("Stopping Telegram bot")
+            await bot_instance.stop()
+            if bot_task:
+                await bot_task
+            logger.info("Telegram bot stopped")
+        except Exception as e:
+            logger.error("Error stopping Telegram bot", error=str(e))
+    
+    # Disconnect databases
     if mongo_manager:
         await mongo_manager.disconnect()
     if neo4j_manager:
@@ -99,8 +138,10 @@ async def root():
         "endpoints": {
             "health": "/health",
             "metrics": "/metrics",
-            "api_docs": "/docs"
-        }
+            "api_docs": "/docs",
+            "telegram_status": "/api/telegram/status"
+        },
+        "telegram_bot": "running" if bot_instance else "not_started"
     }
 
 
@@ -146,6 +187,12 @@ async def health_check():
         health["components"]["redis"] = f"unhealthy: {str(e)}"
         health["status"] = "degraded"
 
+    # Check Telegram bot
+    if bot_instance:
+        health["components"]["telegram_bot"] = "running"
+    else:
+        health["components"]["telegram_bot"] = "not_started"
+
     return health
 
 
@@ -156,7 +203,10 @@ async def metrics():
 
 
 # Include API routers
-# app.include_router(whatsapp_router, prefix="/api/whatsapp", tags=["WhatsApp"])
+app.include_router(whatsapp_router, prefix="/api/whatsapp", tags=["WhatsApp"])
+# Import Telegram router
+from src.api.telegram import router as telegram_router
+app.include_router(telegram_router, prefix="/api/telegram", tags=["Telegram"])
 # app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 # app.include_router(public_router, prefix="/api/v1", tags=["Public API"])
 

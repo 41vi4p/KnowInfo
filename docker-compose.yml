@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   # MongoDB for content storage
@@ -40,49 +40,33 @@ services:
       - redis_data:/data
     command: redis-server --appendonly yes
 
-  # Ollama for local LLMs
-  ollama:
-    image: ollama/ollama:latest
-    container_name: knowinfo-ollama
-    restart: always
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-
-  # KnowInfo API
-  api:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    container_name: knowinfo-api
-    restart: always
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./data:/app/data
-      - ./.env:/app/.env
-    depends_on:
-      - mongodb
-      - neo4j
-      - redis
-      - ollama
-    environment:
-      - MONGODB_URI=mongodb://mongodb:27017
-      - NEO4J_URI=bolt://neo4j:7687
-      - REDIS_URL=redis://redis:6379/0
-      - OLLAMA_BASE_URL=http://ollama:11434
+  # KnowInfo API - COMMENTED OUT FOR LOCAL DEVELOPMENT
+  # Uncomment this section if you want to run the API in Docker
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile
+  #   container_name: knowinfo-api
+  #   restart: always
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ./data:/app/data
+  #     - ./.env:/app/.env
+  #   depends_on:
+  #     - mongodb
+  #     - neo4j
+  #     - redis
+  #   environment:
+  #     - MONGODB_URI=mongodb://mongodb:27017
+  #     - NEO4J_URI=bolt://neo4j:7687
+  #     - REDIS_URL=redis://redis:6379/0
+  #     - OLLAMA_BASE_URL=http://host.docker.internal:11434
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
 
 volumes:
   mongodb_data:
   neo4j_data:
   neo4j_logs:
   redis_data:
-  ollama_data:

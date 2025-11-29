@@ -111,6 +111,10 @@ class RAGEngine:
             sources = []
             for i, doc_id in enumerate(results['ids'][0]):
                 metadata = results['metadatas'][0][i]
+                # Calculate relevance score (ensure it's between 0 and 1)
+                distance = results['distances'][0][i]
+                relevance_score = max(0.0, min(1.0, 1.0 / (1.0 + distance)))
+
                 source = VerificationSource(
                     source_id=doc_id,
                     title=metadata.get('title', 'Unknown'),
@@ -119,7 +123,7 @@ class RAGEngine:
                     credibility=SourceCredibility(metadata.get('credibility', 'unknown')),
                     relevant_excerpt=results['documents'][0][i],
                     supports_claim=False,  # Will be determined by LLM
-                    relevance_score=1.0 - results['distances'][0][i]
+                    relevance_score=relevance_score
                 )
 
                 # Use LLM to determine if source supports or contradicts claim

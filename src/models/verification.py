@@ -43,7 +43,7 @@ class VerificationSource(BaseModel):
 class VerificationResult(BaseModel):
     """Complete verification result for a claim"""
     verification_id: Optional[str] = None
-    claim_id: str
+    claim_id: Optional[str] = None
     claim_text: str
     status: VerificationStatus
     confidence_score: float = Field(ge=0.0, le=100.0)
