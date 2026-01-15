@@ -43,7 +43,7 @@ imagehash==4.3.1
 pytesseract==0.3.10
 
 # Fact-checking & Web Scraping
-requests==2.31.0
+requests==2.32.4
 beautifulsoup4==4.12.2
 selenium==4.15.2
 playwright==1.40.0
